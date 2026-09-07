@@ -1,15 +1,31 @@
 # Korea Trip Planner
 
-Personal trip assistant for the Korea 2026 trip.
+Personal travel execution assistant for the Korea 2026 trip.
 
-Current scope:
-- Jeju Day 1 MVP
-- Dynamic timeline
-- Place cards and external navigation
-- Daily map with fixed/candidate POIs
+## Live
+
+https://korea-trip-planner.xiwenliu390.workers.dev/
+
+## Current
+
+- React + Vite
+- Leaflet daily map
+- Fixed and candidate POIs
 - Current-location support
+- Day 1 dynamic timeline
+- +10 / +20 / +30 minute schedule shifting
+- Completed-node persistence in local storage
+- Place cards with external navigation
+- Mobile bottom navigation: 行程 / 地图 / 餐饮 / 设置
 
-Next:
-- Real Leaflet map
-- Day 2–5 data
-- Cloudflare Pages deployment
+## Next
+
+- Add Jeju Day 2–5 as structured data
+- Day switcher and per-day map/timeline
+- Plan A/B switching for flexible hiking days
+- Better candidate restaurant selection and route-fit logic
+- T-1 operational checks for opening hours, ferries and weather
+
+## Deployment
+
+Production is deployed automatically from the `main` branch to Cloudflare Workers.
