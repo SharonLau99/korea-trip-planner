@@ -18,11 +18,33 @@ function FitMap({ places, userPosition, hikingPath }) {
   return null
 }
 
+function inferredRole(place) {
+  if (place.keyRole) return place.keyRole
+  const roles = {
+    udoPort: 'start',
+    udobong: 'highlight',
+    geommeolle: 'highlight',
+    hagosudong: 'highlight',
+    seobin: 'highlight',
+    route7Start: 'start',
+    beophwan: 'supply',
+    route7Finish: 'finish',
+    hwasun: 'start',
+    sagye: 'supply',
+    songaksan: 'highlight',
+    seotal: 'stamp',
+    altteureu: 'highlight',
+    hamo: 'finish',
+  }
+  return roles[place.id] || null
+}
+
 function markerColor(place) {
-  if (place.keyRole === 'start') return '#1f7a4f'
-  if (place.keyRole === 'finish') return '#8b2f2f'
-  if (place.keyRole === 'stamp') return '#4f46e5'
-  if (place.keyRole === 'supply' || place.keyRole === 'lunch') return '#b7791f'
+  const role = inferredRole(place)
+  if (role === 'start') return '#1f7a4f'
+  if (role === 'finish') return '#8b2f2f'
+  if (role === 'stamp') return '#4f46e5'
+  if (role === 'supply' || role === 'lunch') return '#b7791f'
   if (place.status === 'fixed') return '#1f7a4f'
   if (place.category === 'restaurant' || place.category === 'food') return '#b7791f'
   return '#8a6b20'
@@ -39,13 +61,78 @@ function navLinks(place) {
 }
 
 function roleLabel(place) {
-  if (place.keyRole === 'start') return '🥾 徒步起点'
-  if (place.keyRole === 'finish') return '🏁 徒步终点'
-  if (place.keyRole === 'stamp') return '🔵 中间章 / 状态检查'
-  if (place.keyRole === 'supply') return '💧 补给候选'
-  if (place.keyRole === 'lunch') return '🍜 午饭候选'
-  if (place.keyRole === 'branch') return '🔀 A/B 方案节点'
-  if (place.keyRole === 'highlight') return '✨ 沿途重点'
+  const role = inferredRole(place)
+  if (role === 'start') return '🥾 徒步起点'
+  if (role === 'finish') return '🏁 徒步终点'
+  if (role === 'stamp') return '🔵 中间章 / 状态检查'
+  if (role === 'supply') return '💧 补给候选'
+  if (role === 'lunch') return '🍜 午饭候选'
+  if (role === 'branch') return '🔀 A/B 方案节点'
+  if (role === 'highlight') return '✨ 沿途重点'
+  return null
+}
+
+function inferHikingRoute(places) {
+  const ids = new Set(places.map((place) => place.id))
+
+  if (ids.has('wolpyeong') && ids.has('daepyeong')) return null // Route 8 is derived from explicit key roles in day data.
+
+  if (ids.has('route7Start') && ids.has('route7Finish')) {
+    return {
+      name: 'Jeju Olle Route 7',
+      distanceKm: 12.9,
+      note: 'Route 7 关键点路线示意；用于理解沿海方向与补给位置，出发前按 Jeju Olle / Olle Pass 最新路线复核。',
+      full: [
+        [33.2440, 126.5650],
+        [33.2394, 126.5585],
+        [33.2375, 126.5480],
+        [33.2350, 126.5350],
+        [33.2340, 126.5150],
+        [33.2360, 126.4960],
+        [33.2388, 126.4800],
+        [33.2410, 126.4640],
+      ],
+    }
+  }
+
+  if (ids.has('hwasun') && ids.has('hamo')) {
+    return {
+      name: 'Jeju Olle Route 10',
+      distanceKm: 15.6,
+      note: 'Route 10 关键点路线示意：华顺—沙溪—松岳山—摹瑟浦方向；真正行走以 Jeju Olle 最新标识与 Naver 为准。',
+      full: [
+        [33.2407, 126.3338],
+        [33.2425, 126.3220],
+        [33.2468, 126.3130],
+        [33.2295, 126.3070],
+        [33.2180, 126.3000],
+        [33.1990, 126.2900],
+        [33.2050, 126.2720],
+        [33.2040, 126.2660],
+        [33.2110, 126.2580],
+        [33.2180, 126.2530],
+      ],
+    }
+  }
+
+  if (ids.has('udoPort') && ids.has('udobong') && ids.has('seobin')) {
+    return {
+      name: 'Jeju Olle Route 1-1 · Udo',
+      distanceKm: 11.3,
+      note: '牛岛 Route 1-1 为环岛型关键点示意；当天会受实际到港码头、徒步/电助力方案与船班影响，导航仍以 Olle Pass / Naver 为准。',
+      full: [
+        [33.5050, 126.9520],
+        [33.4933, 126.9570],
+        [33.4937, 126.9660],
+        [33.5050, 126.9680],
+        [33.5156, 126.9582],
+        [33.5200, 126.9495],
+        [33.5108, 126.9446],
+        [33.5050, 126.9520],
+      ],
+    }
+  }
+
   return null
 }
 
@@ -66,24 +153,27 @@ export default function DailyMap({ places, userPosition, onLocate, locating, hik
   )
 
   const derivedHikingPath = useMemo(() => {
-    const startIndex = orderedRoutePlaces.findIndex((place) => place.keyRole === 'start')
-    const finishIndex = orderedRoutePlaces.findIndex((place) => place.keyRole === 'finish')
+    const startIndex = orderedRoutePlaces.findIndex((place) => inferredRole(place) === 'start')
+    const finishIndex = orderedRoutePlaces.findIndex((place) => inferredRole(place) === 'finish')
     if (startIndex < 0 || finishIndex < 0 || finishIndex <= startIndex) return null
     return orderedRoutePlaces.slice(startIndex, finishIndex + 1).map((place) => [place.lat, place.lng])
   }, [orderedRoutePlaces])
 
+  const inferredRoute = useMemo(() => inferHikingRoute(mappedPlaces), [mappedPlaces])
+  const activeHikingRoute = hikingRoute || inferredRoute
+
   const hikingPath = useMemo(() => {
-    if (hikingRoute) {
-      if (planId && Array.isArray(hikingRoute[planId])) return hikingRoute[planId]
-      if (Array.isArray(hikingRoute.full)) return hikingRoute.full
+    if (activeHikingRoute) {
+      if (planId && Array.isArray(activeHikingRoute[planId])) return activeHikingRoute[planId]
+      if (Array.isArray(activeHikingRoute.full)) return activeHikingRoute.full
     }
     return derivedHikingPath
-  }, [hikingRoute, planId, derivedHikingPath])
+  }, [activeHikingRoute, planId, derivedHikingPath])
 
   const hasHikingRoute = Array.isArray(hikingPath) && hikingPath.length >= 2
-  const routeName = hikingRoute?.name || (hasHikingRoute ? '今日 Olle 徒步路线' : null)
-  const routeDistance = hikingRoute?.distanceKm
-  const routeNote = hikingRoute?.note || '关键点路线示意：用于理解方向、景点和补给位置，真正导航请打开 Naver。'
+  const routeName = activeHikingRoute?.name || (hasHikingRoute ? '今日 Olle 徒步路线' : null)
+  const routeDistance = activeHikingRoute?.distanceKm
+  const routeNote = activeHikingRoute?.note || '关键点路线示意：用于理解方向、景点和补给位置，真正导航请打开 Naver。'
 
   const fallbackCenter = mappedPlaces.length
     ? [mappedPlaces[0].lat, mappedPlaces[0].lng]
@@ -134,11 +224,12 @@ export default function DailyMap({ places, userPosition, onLocate, locating, hik
         {mappedPlaces.map((place) => {
           const links = navLinks(place)
           const role = roleLabel(place)
+          const inferred = inferredRole(place)
           return (
             <CircleMarker
               key={place.id}
               center={[place.lat, place.lng]}
-              radius={place.keyRole === 'start' || place.keyRole === 'finish' ? 10 : place.status === 'fixed' ? 9 : 7}
+              radius={inferred === 'start' || inferred === 'finish' ? 10 : place.status === 'fixed' ? 9 : 7}
               pathOptions={{
                 color: '#ffffff',
                 weight: 2,
