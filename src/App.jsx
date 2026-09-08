@@ -3,10 +3,8 @@ import DailyMap from './components/DailyMap'
 import PlaceCard from './components/PlaceCard'
 import ChecklistPanel from './components/ChecklistPanel'
 import { jejuTrip } from './data/trip'
-import { dailyDepartureChecklists } from './data/checklists'
 
 const STORAGE_KEY = 'korea-trip-jeju-state-v2'
-const CHECKLIST_STORAGE_KEY = 'korea-trip-checklist-state-v2'
 
 function timeToMinutes(time) {
   const [hour, minute] = time.split(':').map(Number)
@@ -41,17 +39,6 @@ function todayDayIndex() {
   return index >= 0 ? index : 0
 }
 
-function dailyChecklistProgress(date) {
-  try {
-    const state = JSON.parse(localStorage.getItem(CHECKLIST_STORAGE_KEY) || '{}')
-    const items = dailyDepartureChecklists[date] || []
-    const done = items.filter((_, index) => state[`${date}:daily-${index}`]).length
-    return { done, total: items.length }
-  } catch {
-    return { done: 0, total: (dailyDepartureChecklists[date] || []).length }
-  }
-}
-
 function delayAdvice(dayNumber, shiftMinutes) {
   if (shiftMinutes <= 20) return '节奏正常，按当前方案继续即可。'
   if (dayNumber === 2) {
@@ -77,6 +64,7 @@ function delayAdvice(dayNumber, shiftMinutes) {
 export default function App() {
   const saved = useMemo(() => loadState(), [])
   const [activeTab, setActiveTab] = useState('itinerary')
+  const [viewMode, setViewMode] = useState(saved?.viewMode || 'day')
   const [activeDayIndex, setActiveDayIndex] = useState(saved?.activeDayIndex ?? todayDayIndex())
   const [dayStates, setDayStates] = useState(saved?.dayStates || {})
   const [userPosition, setUserPosition] = useState(null)
@@ -90,11 +78,10 @@ export default function App() {
   const selectedRestaurant = dayState.selectedRestaurant || null
   const planId = dayState.planId || day.defaultPlan || day.planOptions?.[0]?.id || null
   const activePlan = day.planOptions?.find((plan) => plan.id === planId) || null
-  const checklistProgress = dailyChecklistProgress(day.date)
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ activeDayIndex, dayStates }))
-  }, [activeDayIndex, dayStates])
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ viewMode, activeDayIndex, dayStates }))
+  }, [viewMode, activeDayIndex, dayStates])
 
   function updateDayState(patchOrFactory) {
     setDayStates((previous) => {
@@ -185,11 +172,20 @@ export default function App() {
 
   function switchDay(index) {
     setActiveDayIndex(index)
+    setViewMode('day')
     setLocationError('')
     setActiveTab('itinerary')
   }
 
-  const pageTitle = `${day.date.slice(5).replace('-', '/')} · ${day.title}`
+  function showPacking() {
+    setViewMode('packing')
+    setLocationError('')
+    setActiveTab('itinerary')
+  }
+
+  const pageTitle = viewMode === 'packing'
+    ? '出发前 · 总行李清单'
+    : `${day.date.slice(5).replace('-', '/')} · ${day.title}`
   const advice = delayAdvice(day.dayNumber || activeDayIndex + 1, shiftMinutes)
 
   return (
@@ -199,19 +195,28 @@ export default function App() {
           <div>
             <p className="eyebrow">KOREA TRIP · JEJU</p>
             <h1>{pageTitle}</h1>
-            <p className="hero-subtitle">{day.subtitle}</p>
+            <p className="hero-subtitle">
+              {viewMode === 'packing' ? '旅行开始前，把总行李一次确认完整' : day.subtitle}
+            </p>
           </div>
           <div className="hero-tags">
-            <span>Day {day.dayNumber || activeDayIndex + 1}</span>
-            <span>{day.theme || 'Jeju'}</span>
+            {viewMode === 'packing' ? (
+              <><span>Before Trip</span><span>行李准备</span></>
+            ) : (
+              <><span>Day {day.dayNumber || activeDayIndex + 1}</span><span>{day.theme || 'Jeju'}</span></>
+            )}
           </div>
         </header>
 
-        <section className="day-switcher" aria-label="济州行程日期切换">
+        <section className="day-switcher day-switcher-with-packing" aria-label="济州行程日期切换">
+          <button className={viewMode === 'packing' ? 'active packing-day-button' : 'packing-day-button'} onClick={showPacking}>
+            <span>🧳</span>
+            <strong>行李</strong>
+          </button>
           {jejuTrip.map((item, index) => (
             <button
               key={item.date}
-              className={index === activeDayIndex ? 'active' : ''}
+              className={viewMode === 'day' && index === activeDayIndex ? 'active' : ''}
               onClick={() => switchDay(index)}
             >
               <span>D{item.dayNumber || index + 1}</span>
@@ -220,220 +225,218 @@ export default function App() {
           ))}
         </section>
 
-        {activeTab === 'itinerary' && (
+        {viewMode === 'packing' ? (
+          <ChecklistPanel mode="packing" />
+        ) : (
           <>
-            <section className="panel checklist-launch-card">
-              <div>
-                <p className="eyebrow">出门前别漏东西</p>
-                <h2>✅ 今日 Checklist</h2>
-                <p>{checklistProgress.done}/{checklistProgress.total} 已完成</p>
-              </div>
-              <button className="primary-button" onClick={() => setActiveTab('checklist')}>打开清单</button>
-            </section>
+            {activeTab === 'itinerary' && (
+              <>
+                <ChecklistPanel day={day} mode="daily" compact />
 
-            {day.flight && (
-              <section className="panel flight-card">
-                <div>
-                  <p className="eyebrow">航班锚点</p>
-                  <h2>✈️ {day.flight.number}</h2>
-                  <p>{day.flight.from} → {day.flight.to}</p>
-                </div>
-                <div className="flight-times">
-                  <strong>{day.flight.departure}</strong>
-                  <span>→</span>
-                  <strong>{day.flight.arrival}</strong>
-                </div>
-              </section>
-            )}
+                {day.flight && (
+                  <section className="panel flight-card">
+                    <div>
+                      <p className="eyebrow">航班锚点</p>
+                      <h2>✈️ {day.flight.number}</h2>
+                      <p>{day.flight.from} → {day.flight.to}</p>
+                    </div>
+                    <div className="flight-times">
+                      <strong>{day.flight.departure}</strong>
+                      <span>→</span>
+                      <strong>{day.flight.arrival}</strong>
+                    </div>
+                  </section>
+                )}
 
-            {currentNode && (
-              <section className="panel current-panel">
-                <div className="section-heading">
-                  <div>
-                    <p className="eyebrow">当前节点</p>
-                    <h2>{currentNode.icon} {currentNode.title}</h2>
-                  </div>
-                  <span className="time-badge">{currentNode.displayTime}</span>
-                </div>
-                <p>{currentNode.description}</p>
-                {nextNode && <p className="next-line">下一步：<strong>{nextNode.displayTime} · {nextNode.title}</strong></p>}
-                <div className="current-actions">
-                  <button className="primary-button" onClick={() => toggleComplete(currentNode.id)}>✓ 完成当前节点</button>
-                  {!currentNode.fixed && <button className="secondary-button" onClick={startNextNow}>现在开始</button>}
-                </div>
-              </section>
-            )}
-
-            {day.planOptions?.length > 0 && (
-              <section className="panel">
-                <div className="section-heading">
-                  <div>
-                    <p className="eyebrow">当天方案</p>
-                    <h2>🔀 动态 Plan</h2>
-                  </div>
-                </div>
-                <div className="plan-grid">
-                  {day.planOptions.map((plan) => (
-                    <button
-                      key={plan.id}
-                      className={`plan-option ${plan.id === planId ? 'active' : ''}`}
-                      onClick={() => setPlan(plan.id)}
-                    >
-                      <strong>{plan.label}</strong>
-                      <span>{plan.description}</span>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            <section className="panel">
-              <div className="section-heading">
-                <div>
-                  <p className="eyebrow">动态时间轴</p>
-                  <h2>⏱️ 当天时间调整</h2>
-                </div>
-                <span className={`shift-badge ${shiftMinutes >= 60 ? 'risk' : ''}`}>
-                  {shiftMinutes === 0 ? '原计划' : `${shiftMinutes > 0 ? '+' : ''}${shiftMinutes} 分钟`}
-                </span>
-              </div>
-              <div className="shift-controls">
-                <button onClick={() => setShiftMinutes((value) => value - 10)}>−10</button>
-                <button onClick={() => setShiftMinutes((value) => value + 10)}>+10</button>
-                <button onClick={() => setShiftMinutes((value) => value + 20)}>+20</button>
-                <button onClick={() => setShiftMinutes((value) => value + 30)}>+30</button>
-                <button className="reset-button" onClick={() => setShiftMinutes(0)}>恢复原计划</button>
-              </div>
-              <div className={`advice-box ${shiftMinutes >= 60 ? 'risk-box' : ''}`}>
-                <strong>{shiftMinutes >= 60 ? '⚠️ 时间风险' : '💡 当前建议'}</strong>
-                <p>{advice}</p>
-              </div>
-            </section>
-
-            <section className="panel">
-              <div className="section-heading">
-                <div>
-                  <p className="eyebrow">执行顺序</p>
-                  <h2>今日时间轴</h2>
-                </div>
-              </div>
-              <div className="timeline">
-                {timeline.map((node, index) => {
-                  const isDone = completed.includes(node.id)
-                  const isCurrent = node.id === currentNode?.id
-                  return (
-                    <article key={node.id} className={`timeline-node ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}`}>
-                      <div className="timeline-time">{node.displayTime}</div>
-                      <div className="timeline-body">
-                        <div className="timeline-title-row">
-                          <h3>{node.icon} {node.title}</h3>
-                          {node.fixed && <span className="anchor-pill">固定</span>}
-                        </div>
-                        <p>{node.description}</p>
-                        {node.transportToNext && <p className="transport-line">下一段：{node.transportToNext}</p>}
-                        <button className="mini-button" onClick={() => toggleComplete(node.id)}>{isDone ? '↩ 取消完成' : '✓ 完成'}</button>
+                {currentNode && (
+                  <section className="panel current-panel">
+                    <div className="section-heading">
+                      <div>
+                        <p className="eyebrow">当前节点</p>
+                        <h2>{currentNode.icon} {currentNode.title}</h2>
                       </div>
-                      {index < timeline.length - 1 && <div className="timeline-connector" />}
-                    </article>
-                  )
-                })}
-              </div>
-            </section>
+                      <span className="time-badge">{currentNode.displayTime}</span>
+                    </div>
+                    <p>{currentNode.description}</p>
+                    {nextNode && <p className="next-line">下一步：<strong>{nextNode.displayTime} · {nextNode.title}</strong></p>}
+                    <div className="current-actions">
+                      <button className="primary-button" onClick={() => toggleComplete(currentNode.id)}>✓ 完成当前节点</button>
+                      {!currentNode.fixed && <button className="secondary-button" onClick={startNextNow}>现在开始</button>}
+                    </div>
+                  </section>
+                )}
 
-            <section className="panel reminder-panel">
-              <p className="eyebrow">今日提醒</p>
-              <h2>🔔 执行前检查</h2>
-              <p>{day.reminder}</p>
-            </section>
-          </>
-        )}
+                {day.planOptions?.length > 0 && (
+                  <section className="panel">
+                    <div className="section-heading">
+                      <div>
+                        <p className="eyebrow">当天方案</p>
+                        <h2>🔀 动态 Plan</h2>
+                      </div>
+                    </div>
+                    <div className="plan-grid">
+                      {day.planOptions.map((plan) => (
+                        <button
+                          key={plan.id}
+                          className={`plan-option ${plan.id === planId ? 'active' : ''}`}
+                          onClick={() => setPlan(plan.id)}
+                        >
+                          <strong>{plan.label}</strong>
+                          <span>{plan.description}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
 
-        {activeTab === 'map' && (
-          <>
-            <DailyMap
-              places={day.places}
-              userPosition={userPosition}
-              onLocate={locateMe}
-              locating={locating}
-              hikingRoute={day.hikingRoute}
-              planId={planId}
-            />
-            {locationError && <div className="panel error-panel">{locationError}</div>}
-            <section className="panel">
-              <p className="eyebrow">地图内全部地点</p>
-              <h2>固定 + 候选</h2>
-              <div className="compact-place-list">
-                {day.places.map((place) => <PlaceCard key={place.id} place={place} />)}
-              </div>
-            </section>
-          </>
-        )}
+                <section className="panel">
+                  <div className="section-heading">
+                    <div>
+                      <p className="eyebrow">动态时间轴</p>
+                      <h2>⏱️ 当天时间调整</h2>
+                    </div>
+                    <span className={`shift-badge ${shiftMinutes >= 60 ? 'risk' : ''}`}>
+                      {shiftMinutes === 0 ? '原计划' : `${shiftMinutes > 0 ? '+' : ''}${shiftMinutes} 分钟`}
+                    </span>
+                  </div>
+                  <div className="shift-controls">
+                    <button onClick={() => setShiftMinutes((value) => value - 10)}>−10</button>
+                    <button onClick={() => setShiftMinutes((value) => value + 10)}>+10</button>
+                    <button onClick={() => setShiftMinutes((value) => value + 20)}>+20</button>
+                    <button onClick={() => setShiftMinutes((value) => value + 30)}>+30</button>
+                    <button className="reset-button" onClick={() => setShiftMinutes(0)}>恢复原计划</button>
+                  </div>
+                  <div className={`advice-box ${shiftMinutes >= 60 ? 'risk-box' : ''}`}>
+                    <strong>{shiftMinutes >= 60 ? '⚠️ 时间风险' : '💡 当前建议'}</strong>
+                    <p>{advice}</p>
+                  </div>
+                </section>
 
-        {activeTab === 'food' && (
-          <>
-            <section className="panel">
-              <p className="eyebrow">Day {day.dayNumber || activeDayIndex + 1} 餐饮池</p>
-              <h2>🍴 当天吃什么</h2>
-              <p>按路线适配、当前位置、营业状态、排队和体力动态选择，不为了“打卡”大幅绕路。</p>
-            </section>
-            {foodPlaces.length > 0 ? foodPlaces.map((place) => (
-              <PlaceCard
-                key={place.id}
-                place={place}
-                selected={selectedRestaurant === place.id}
-                onSelect={selectRestaurant}
-              />
-            )) : (
-              <section className="panel verification-panel">当前没有已录入的餐饮候选。</section>
+                <section className="panel">
+                  <div className="section-heading">
+                    <div>
+                      <p className="eyebrow">执行顺序</p>
+                      <h2>今日时间轴</h2>
+                    </div>
+                  </div>
+                  <div className="timeline">
+                    {timeline.map((node, index) => {
+                      const isDone = completed.includes(node.id)
+                      const isCurrent = node.id === currentNode?.id
+                      return (
+                        <article key={node.id} className={`timeline-node ${isDone ? 'done' : ''} ${isCurrent ? 'current' : ''}`}>
+                          <div className="timeline-time">{node.displayTime}</div>
+                          <div className="timeline-body">
+                            <div className="timeline-title-row">
+                              <h3>{node.icon} {node.title}</h3>
+                              {node.fixed && <span className="anchor-pill">固定</span>}
+                            </div>
+                            <p>{node.description}</p>
+                            {node.transportToNext && <p className="transport-line">下一段：{node.transportToNext}</p>}
+                            <button className="mini-button" onClick={() => toggleComplete(node.id)}>{isDone ? '↩ 取消完成' : '✓ 完成'}</button>
+                          </div>
+                          {index < timeline.length - 1 && <div className="timeline-connector" />}
+                        </article>
+                      )
+                    })}
+                  </div>
+                </section>
+
+                <section className="panel reminder-panel">
+                  <p className="eyebrow">今日提醒</p>
+                  <h2>🔔 执行前检查</h2>
+                  <p>{day.reminder}</p>
+                </section>
+              </>
             )}
-            {day.restaurantNotes?.length > 0 && (
-              <section className="panel verification-panel">
-                <p className="eyebrow">待核验候选</p>
-                <h2>不为凑地图而编坐标</h2>
-                {day.restaurantNotes.map((note) => <p key={note}>{note}</p>)}
-              </section>
+
+            {activeTab === 'map' && (
+              <>
+                <DailyMap
+                  places={day.places}
+                  userPosition={userPosition}
+                  onLocate={locateMe}
+                  locating={locating}
+                  hikingRoute={day.hikingRoute}
+                  planId={planId}
+                />
+                {locationError && <div className="panel error-panel">{locationError}</div>}
+                <section className="panel">
+                  <p className="eyebrow">地图内全部地点</p>
+                  <h2>固定 + 候选</h2>
+                  <div className="compact-place-list">
+                    {day.places.map((place) => <PlaceCard key={place.id} place={place} />)}
+                  </div>
+                </section>
+              </>
             )}
-          </>
-        )}
 
-        {activeTab === 'checklist' && <ChecklistPanel day={day} />}
+            {activeTab === 'food' && (
+              <>
+                <section className="panel">
+                  <p className="eyebrow">Day {day.dayNumber || activeDayIndex + 1} 餐饮池</p>
+                  <h2>🍴 当天吃什么</h2>
+                  <p>按路线适配、当前位置、营业状态、排队和体力动态选择，不为了“打卡”大幅绕路。</p>
+                </section>
+                {foodPlaces.length > 0 ? foodPlaces.map((place) => (
+                  <PlaceCard
+                    key={place.id}
+                    place={place}
+                    selected={selectedRestaurant === place.id}
+                    onSelect={selectRestaurant}
+                  />
+                )) : (
+                  <section className="panel verification-panel">当前没有已录入的餐饮候选。</section>
+                )}
+                {day.restaurantNotes?.length > 0 && (
+                  <section className="panel verification-panel">
+                    <p className="eyebrow">待核验候选</p>
+                    <h2>不为凑地图而编坐标</h2>
+                    {day.restaurantNotes.map((note) => <p key={note}>{note}</p>)}
+                  </section>
+                )}
+              </>
+            )}
 
-        {activeTab === 'settings' && (
-          <>
-            <section className="panel settings-panel">
-              <p className="eyebrow">旅行设置</p>
-              <h2>⚙️ Day {day.dayNumber || activeDayIndex + 1} 基础信息</h2>
-              <dl>
-                <div><dt>日期</dt><dd>{day.date}</dd></div>
-                <div><dt>主题</dt><dd>{day.theme || '-'}</dd></div>
-                {day.flight && <div><dt>航班</dt><dd>{day.flight.number} · {day.flight.arrival} 抵达</dd></div>}
-                <div><dt>住宿</dt><dd>{day.hotel}</dd></div>
-                <div><dt>当前方案</dt><dd>{activePlan?.label || '默认'}</dd></div>
-                <div><dt>时间偏移</dt><dd>{shiftMinutes > 0 ? '+' : ''}{shiftMinutes} 分钟</dd></div>
-              </dl>
-              <button className="danger-button" onClick={resetDay}>清空当天现场状态</button>
-            </section>
+            {activeTab === 'settings' && (
+              <>
+                <section className="panel settings-panel">
+                  <p className="eyebrow">旅行设置</p>
+                  <h2>⚙️ Day {day.dayNumber || activeDayIndex + 1} 基础信息</h2>
+                  <dl>
+                    <div><dt>日期</dt><dd>{day.date}</dd></div>
+                    <div><dt>主题</dt><dd>{day.theme || '-'}</dd></div>
+                    {day.flight && <div><dt>航班</dt><dd>{day.flight.number} · {day.flight.arrival} 抵达</dd></div>}
+                    <div><dt>住宿</dt><dd>{day.hotel}</dd></div>
+                    <div><dt>当前方案</dt><dd>{activePlan?.label || '默认'}</dd></div>
+                    <div><dt>时间偏移</dt><dd>{shiftMinutes > 0 ? '+' : ''}{shiftMinutes} 分钟</dd></div>
+                  </dl>
+                  <button className="danger-button" onClick={resetDay}>清空当天现场状态</button>
+                </section>
 
-            {day.verificationNotes?.length > 0 && (
-              <section className="panel verification-panel">
-                <p className="eyebrow">出发前核验</p>
-                <h2>🧾 易变化信息</h2>
-                <ul className="verification-list">
-                  {day.verificationNotes.map((note) => <li key={note}>{note}</li>)}
-                </ul>
-              </section>
+                {day.verificationNotes?.length > 0 && (
+                  <section className="panel verification-panel">
+                    <p className="eyebrow">出发前核验</p>
+                    <h2>🧾 易变化信息</h2>
+                    <ul className="verification-list">
+                      {day.verificationNotes.map((note) => <li key={note}>{note}</li>)}
+                    </ul>
+                  </section>
+                )}
+              </>
             )}
           </>
         )}
       </main>
 
-      <nav className="bottom-nav bottom-nav-five">
-        <button className={activeTab === 'itinerary' ? 'active' : ''} onClick={() => setActiveTab('itinerary')}><span>🏠</span>行程</button>
-        <button className={activeTab === 'map' ? 'active' : ''} onClick={() => setActiveTab('map')}><span>🗺️</span>地图</button>
-        <button className={activeTab === 'food' ? 'active' : ''} onClick={() => setActiveTab('food')}><span>🍴</span>餐饮</button>
-        <button className={activeTab === 'checklist' ? 'active' : ''} onClick={() => setActiveTab('checklist')}><span>✅</span>清单</button>
-        <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}><span>⚙️</span>设置</button>
-      </nav>
+      {viewMode === 'day' && (
+        <nav className="bottom-nav">
+          <button className={activeTab === 'itinerary' ? 'active' : ''} onClick={() => setActiveTab('itinerary')}><span>🏠</span>行程</button>
+          <button className={activeTab === 'map' ? 'active' : ''} onClick={() => setActiveTab('map')}><span>🗺️</span>地图</button>
+          <button className={activeTab === 'food' ? 'active' : ''} onClick={() => setActiveTab('food')}><span>🍴</span>餐饮</button>
+          <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}><span>⚙️</span>设置</button>
+        </nav>
+      )}
     </div>
   )
 }
