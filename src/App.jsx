@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import DailyMap from './components/DailyMap'
 import PlaceCard from './components/PlaceCard'
+import ChecklistPanel from './components/ChecklistPanel'
 import { jejuTrip } from './data/trip'
+import { dailyDepartureChecklists } from './data/checklists'
 
 const STORAGE_KEY = 'korea-trip-jeju-state-v2'
+const CHECKLIST_STORAGE_KEY = 'korea-trip-checklist-state-v2'
 
 function timeToMinutes(time) {
   const [hour, minute] = time.split(':').map(Number)
@@ -36,6 +39,17 @@ function todayDayIndex() {
   const localDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
   const index = jejuTrip.findIndex((day) => day.date === localDate)
   return index >= 0 ? index : 0
+}
+
+function dailyChecklistProgress(date) {
+  try {
+    const state = JSON.parse(localStorage.getItem(CHECKLIST_STORAGE_KEY) || '{}')
+    const items = dailyDepartureChecklists[date] || []
+    const done = items.filter((_, index) => state[`${date}:daily-${index}`]).length
+    return { done, total: items.length }
+  } catch {
+    return { done: 0, total: (dailyDepartureChecklists[date] || []).length }
+  }
 }
 
 function delayAdvice(dayNumber, shiftMinutes) {
@@ -76,6 +90,7 @@ export default function App() {
   const selectedRestaurant = dayState.selectedRestaurant || null
   const planId = dayState.planId || day.defaultPlan || day.planOptions?.[0]?.id || null
   const activePlan = day.planOptions?.find((plan) => plan.id === planId) || null
+  const checklistProgress = dailyChecklistProgress(day.date)
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ activeDayIndex, dayStates }))
@@ -207,6 +222,15 @@ export default function App() {
 
         {activeTab === 'itinerary' && (
           <>
+            <section className="panel checklist-launch-card">
+              <div>
+                <p className="eyebrow">出门前别漏东西</p>
+                <h2>✅ 今日 Checklist</h2>
+                <p>{checklistProgress.done}/{checklistProgress.total} 已完成</p>
+              </div>
+              <button className="primary-button" onClick={() => setActiveTab('checklist')}>打开清单</button>
+            </section>
+
             {day.flight && (
               <section className="panel flight-card">
                 <div>
@@ -326,7 +350,14 @@ export default function App() {
 
         {activeTab === 'map' && (
           <>
-            <DailyMap places={day.places} userPosition={userPosition} onLocate={locateMe} locating={locating} />
+            <DailyMap
+              places={day.places}
+              userPosition={userPosition}
+              onLocate={locateMe}
+              locating={locating}
+              hikingRoute={day.hikingRoute}
+              planId={planId}
+            />
             {locationError && <div className="panel error-panel">{locationError}</div>}
             <section className="panel">
               <p className="eyebrow">地图内全部地点</p>
@@ -365,6 +396,8 @@ export default function App() {
           </>
         )}
 
+        {activeTab === 'checklist' && <ChecklistPanel day={day} />}
+
         {activeTab === 'settings' && (
           <>
             <section className="panel settings-panel">
@@ -394,10 +427,11 @@ export default function App() {
         )}
       </main>
 
-      <nav className="bottom-nav">
+      <nav className="bottom-nav bottom-nav-five">
         <button className={activeTab === 'itinerary' ? 'active' : ''} onClick={() => setActiveTab('itinerary')}><span>🏠</span>行程</button>
         <button className={activeTab === 'map' ? 'active' : ''} onClick={() => setActiveTab('map')}><span>🗺️</span>地图</button>
         <button className={activeTab === 'food' ? 'active' : ''} onClick={() => setActiveTab('food')}><span>🍴</span>餐饮</button>
+        <button className={activeTab === 'checklist' ? 'active' : ''} onClick={() => setActiveTab('checklist')}><span>✅</span>清单</button>
         <button className={activeTab === 'settings' ? 'active' : ''} onClick={() => setActiveTab('settings')}><span>⚙️</span>设置</button>
       </nav>
     </div>
