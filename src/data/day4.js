@@ -9,7 +9,34 @@ export const day4 = {
   verificationNotes: [
     '当前沿用此前讨论的 Route 8 约 19.3 km、实际 6.5–7.5 小时节奏；出发前按官方最新路线核验。',
     '午饭候选仍未最终锁定，当前保留已讨论候选并标记待核验点位。',
+    '地图中的徒步线用于展示关键点之间的空间关系，不作为逐米导航轨迹；正式行走以 Jeju Olle 最新路线标识 / Olle Pass 与 Naver 为准。',
   ],
+  hikingRoute: {
+    id: 'olle-8',
+    name: 'Jeju Olle Route 8',
+    distanceKm: 19.3,
+    accuracy: 'keypoint-schematic',
+    note: '关键点路线示意：帮助理解当天路线，不替代官方实时路线或导航。',
+    full: [
+      [33.2397, 126.4645],
+      [33.2457, 126.4495],
+      [33.2389, 126.4385],
+      [33.2379, 126.4263],
+      [33.2510, 126.4170],
+      [33.2456, 126.4115],
+      [33.2340, 126.3770],
+      [33.2371, 126.3638],
+    ],
+    shortcut: [
+      [33.2397, 126.4645],
+      [33.2457, 126.4495],
+      [33.2389, 126.4385],
+      [33.2379, 126.4263],
+      [33.2510, 126.4170],
+      [33.2340, 126.3770],
+      [33.2371, 126.3638],
+    ],
+  },
   planOptions: [
     {
       id: 'full',
@@ -33,123 +60,37 @@ export const day4 = {
   ],
   defaultPlan: 'full',
   timeline: [
-    {
-      id: 'breakfast', time: '07:00', title: '早餐 + 徒步准备', icon: '🥣',
-      description: '碳水 + 蛋白质，检查水、能量零食、防晒、鞋袜。',
-    },
-    {
-      id: 'depart', time: '07:45', title: 'Hotel Bridge → 月坪起点', icon: '🚕',
-      description: '优先 Taxi，省腿给长距离徒步。',
-    },
-    {
-      id: 'start', time: '08:15', title: '月坪 Awaenangmok / Route 8 起点', icon: '🥾',
-      description: '起点盖章、最后补水。Awaenangmok Bakery 可作为出发前补给候选。',
-    },
-    {
-      id: 'yakcheonsa', time: '08:50', title: '药泉寺', icon: '🛕',
-      description: '停留约 20–30 分钟，不把它扩成独立半日景点。',
-    },
-    {
-      id: 'daepo', time: '09:45', title: '大浦港', icon: '⚓',
-      description: '沿路线继续前进。',
-    },
-    {
-      id: 'jusangjeolli', time: '10:15', title: '柱状节理', icon: '🌋',
-      description: 'Route 8 路过即可，不额外停 1 小时。',
-    },
-    {
-      id: 'midpoint', time: '11:00', title: 'Beritnae Oreum / 中点章', icon: '📍',
-      description: '补水、腿部状态检查。',
-    },
-    {
-      id: 'lunch', time: '11:40', title: '午饭窗口', icon: '🍜',
-      description: '以不大幅绕路为第一原则。候选包括 중문수두리보말칼국수、Gozip Dol Wooluck Jungmun。',
-    },
-    {
-      id: 'decision', time: '12:30', title: 'A / B 路线决策', icon: '🔀',
-      description: '看天气、腿部状态和进度：正常走 A；雨大、累或落后时切 B。',
-    },
-    {
-      id: 'saekdal', time: '13:00', title: '中文穑达海滩', icon: '🏖️',
-      description: 'Plan A 包含；Plan B 跳过。',
-    },
-    {
-      id: 'yerae', time: '14:00', title: '猊来 / Nonjitmul 方向', icon: '🌊',
-      description: '后半程沿海继续，控制节奏。',
-    },
-    {
-      id: 'finish', time: '15:45', title: '大坪港完成 Route 8', icon: '🏁',
-      description: '休息约 20 分钟，顺便看朴寿基井一带海岸崖景观。',
-    },
-    {
-      id: 'returnHotel', time: '16:40', title: '返回 Hotel Bridge', icon: '🚌',
-      description: 'Naver 显示下一班公交很快就坐公交；等待明显过久直接 Taxi。',
-    },
-    {
-      id: 'dinner', time: '18:00', title: 'Hotel Bridge 晚饭池', icon: '🍽️',
-      description: '与 9/28 共用同一候选池；今天可略偏向 먹고정，但不锁死。',
-    },
+    { id: 'breakfast', time: '07:00', title: '早餐 + 徒步准备', icon: '🥣', description: '碳水 + 蛋白质，检查水、能量零食、防晒、鞋袜。' },
+    { id: 'depart', time: '07:45', title: 'Hotel Bridge → 月坪起点', icon: '🚕', description: '优先 Taxi，省腿给长距离徒步。' },
+    { id: 'start', time: '08:15', title: '月坪 Awaenangmok / Route 8 起点', icon: '🥾', description: '起点盖章、最后补水。Awaenangmok Bakery 可作为出发前补给候选。' },
+    { id: 'yakcheonsa', time: '08:50', title: '药泉寺', icon: '🛕', description: '停留约 20–30 分钟，不把它扩成独立半日景点。' },
+    { id: 'daepo', time: '09:45', title: '大浦港', icon: '⚓', description: '沿路线继续前进。' },
+    { id: 'jusangjeolli', time: '10:15', title: '柱状节理', icon: '🌋', description: 'Route 8 路过即可，不额外停 1 小时。' },
+    { id: 'midpoint', time: '11:00', title: 'Beritnae Oreum / 中点章', icon: '📍', description: '补水、腿部状态检查。' },
+    { id: 'lunch', time: '11:40', title: '午饭窗口', icon: '🍜', description: '以不大幅绕路为第一原则。候选包括 중문수두리보말칼국수、Gozip Dol Wooluck Jungmun。' },
+    { id: 'decision', time: '12:30', title: 'A / B 路线决策', icon: '🔀', description: '看天气、腿部状态和进度：正常走 A；雨大、累或落后时切 B。' },
+    { id: 'saekdal', time: '13:00', title: '中文穑达海滩', icon: '🏖️', description: 'Plan A 包含；Plan B 跳过。' },
+    { id: 'yerae', time: '14:00', title: '猊来 / Nonjitmul 方向', icon: '🌊', description: '后半程沿海继续，控制节奏。' },
+    { id: 'finish', time: '15:45', title: '大坪港完成 Route 8', icon: '🏁', description: '休息约 20 分钟，顺便看朴寿基井一带海岸崖景观。' },
+    { id: 'returnHotel', time: '16:40', title: '返回 Hotel Bridge', icon: '🚌', description: 'Naver 显示下一班公交很快就坐公交；等待明显过久直接 Taxi。' },
+    { id: 'dinner', time: '18:00', title: 'Hotel Bridge 晚饭池', icon: '🍽️', description: '与 9/28 共用同一候选池；今天可略偏向 먹고정，但不锁死。' },
   ],
   places: [
-    {
-      id: 'bridge', name: 'Hotel Bridge Seogwipo', koreanName: '호텔브릿지 서귀포', category: 'hotel', status: 'fixed', routeOrder: 1,
-      lat: 33.2455925, lng: 126.5666523, address: '436 Taepyeong-ro, Seogwipo-si, Jeju-do', note: 'Day 4 出发与返回酒店。',
-    },
-    {
-      id: 'wolpyeong', name: '月坪 Awaenangmok Route 8 起点', koreanName: '월평 아왜낭목', category: 'hike', status: 'fixed', routeOrder: 2,
-      lat: 33.2397, lng: 126.4645, address: 'Wolpyeong-dong, Seogwipo-si', note: 'Route 8 起点区域；精确章点出发前核验。', approximate: true,
-    },
-    {
-      id: 'bakery', name: 'Awaenangmok Bakery', category: 'food', status: 'candidate',
-      lat: 33.2402, lng: 126.4652, address: '11 Wolpyeonghawon-ro, Seogwipo-si', note: '起点附近最终补给候选。', approximate: true,
-    },
-    {
-      id: 'yakcheonsa', name: '药泉寺', koreanName: '약천사', category: 'attraction', status: 'fixed', routeOrder: 3,
-      lat: 33.2457, lng: 126.4495, address: '293-28 Ieodo-ro, Seogwipo-si', note: 'Route 8 途中停留 20–30 分钟。', approximate: true,
-    },
-    {
-      id: 'daepo', name: '大浦港', koreanName: '대포항', category: 'hike', status: 'fixed', routeOrder: 4,
-      lat: 33.2389, lng: 126.4385, address: 'Daepo-dong, Seogwipo-si', note: '沿线节点。', approximate: true,
-    },
-    {
-      id: 'jusangjeolli', name: '柱状节理', koreanName: '주상절리대', category: 'attraction', status: 'fixed', routeOrder: 5,
-      lat: 33.2379, lng: 126.4263, address: '36-30 Ieodo-ro, Seogwipo-si', note: 'Route 8 路过，不安排长时间独立参观。', approximate: true,
-    },
-    {
-      id: 'beritnae', name: 'Beritnae Oreum / 中点章区域', category: 'hike', status: 'fixed', routeOrder: 6,
-      lat: 33.251, lng: 126.417, address: 'Jungmun-dong, Seogwipo-si', note: '中段补水和状态检查。', approximate: true,
-    },
-    {
-      id: 'saekdal', name: '中文穑达海滩', koreanName: '중문색달해수욕장', category: 'attraction', status: 'candidate', routeOrder: 7,
-      lat: 33.2456, lng: 126.4115, address: 'Saekdal-dong, Seogwipo-si', note: 'Plan A 经过，Plan B 可跳过。', approximate: true,
-    },
-    {
-      id: 'nonjitmul', name: 'Nonjitmul / 猊来海岸', koreanName: '논짓물', category: 'hike', status: 'fixed', routeOrder: 8,
-      lat: 33.234, lng: 126.377, address: 'Yerae-dong, Seogwipo-si', note: 'Route 8 后半段海岸节点。', approximate: true,
-    },
-    {
-      id: 'daepyeong', name: '大坪港', koreanName: '대평포구', category: 'hike', status: 'fixed', routeOrder: 9,
-      lat: 33.2371, lng: 126.3638, address: 'Gamsan-ri, Andeok-myeon, Seogwipo-si', note: 'Route 8 终点。', approximate: true,
-    },
-    {
-      id: 'bomal', name: '중문수두리보말칼국수', koreanName: '중문수두리보말칼국수', category: 'restaurant', status: 'candidate',
-      address: 'Jungmun area, Seogwipo-si', note: '徒步午饭优先候选：bomal 刀切面；精确点位待核验。',
-    },
-    {
-      id: 'gozip', name: 'Gozip Dol Wooluck Jungmun', category: 'restaurant', status: 'candidate',
-      address: 'Jungmun area, Seogwipo-si', note: '更正式的石斑鱼/鱼料理候选，若不想吃太重可跳过。',
-    },
-    {
-      id: 'ppolsal', name: '뽈살집 本店', koreanName: '뽈살집 본점', category: 'restaurant', status: 'candidate', address: 'Seogwipo-si', note: '两晚共用晚饭池。',
-    },
-    {
-      id: 'negeori', name: 'Negeori Restaurant', koreanName: '네거리식당', category: 'restaurant', status: 'candidate', address: '20 Seomun-ro 29beon-gil, Seogwipo-si', note: '带鱼料理候选。',
-    },
-    {
-      id: 'meokgojeong', name: '먹고정', koreanName: '먹고정', category: 'restaurant', status: 'candidate', address: 'Seogwipo-si', note: '9/29 略优先的黑猪烧烤候选。',
-    },
-    {
-      id: 'yongi', name: 'Yong’s Restaurant', koreanName: '용이식당', category: 'restaurant', status: 'candidate', address: 'Seogwipo-si', note: '快速、当地感强的备选。',
-    },
+    { id: 'bridge', name: 'Hotel Bridge Seogwipo', koreanName: '호텔브릿지 서귀포', category: 'hotel', status: 'fixed', routeOrder: 1, lat: 33.2455925, lng: 126.5666523, address: '436 Taepyeong-ro, Seogwipo-si, Jeju-do', note: 'Day 4 出发与返回酒店。' },
+    { id: 'wolpyeong', name: '月坪 Awaenangmok Route 8 起点', koreanName: '월평 아왜낭목', category: 'hike', status: 'fixed', routeOrder: 2, keyRole: 'start', lat: 33.2397, lng: 126.4645, address: 'Wolpyeong-dong, Seogwipo-si', note: 'Route 8 起点区域；精确章点出发前核验。', approximate: true },
+    { id: 'bakery', name: 'Awaenangmok Bakery', category: 'food', status: 'candidate', keyRole: 'supply', lat: 33.2402, lng: 126.4652, address: '11 Wolpyeonghawon-ro, Seogwipo-si', note: '起点附近最终补给候选。', approximate: true },
+    { id: 'yakcheonsa', name: '药泉寺', koreanName: '약천사', category: 'attraction', status: 'fixed', routeOrder: 3, keyRole: 'highlight', lat: 33.2457, lng: 126.4495, address: '293-28 Ieodo-ro, Seogwipo-si', note: 'Route 8 途中停留 20–30 分钟。', approximate: true },
+    { id: 'daepo', name: '大浦港', koreanName: '대포항', category: 'hike', status: 'fixed', routeOrder: 4, keyRole: 'waypoint', lat: 33.2389, lng: 126.4385, address: 'Daepo-dong, Seogwipo-si', note: '沿线节点。', approximate: true },
+    { id: 'jusangjeolli', name: '柱状节理', koreanName: '주상절리대', category: 'attraction', status: 'fixed', routeOrder: 5, keyRole: 'highlight', lat: 33.2379, lng: 126.4263, address: '36-30 Ieodo-ro, Seogwipo-si', note: 'Route 8 路过，不安排长时间独立参观。', approximate: true },
+    { id: 'beritnae', name: 'Beritnae Oreum / 中点章区域', category: 'hike', status: 'fixed', routeOrder: 6, keyRole: 'stamp', lat: 33.251, lng: 126.417, address: 'Jungmun-dong, Seogwipo-si', note: '中段补水和状态检查。', approximate: true },
+    { id: 'saekdal', name: '中文穑达海滩', koreanName: '중문색달해수욕장', category: 'attraction', status: 'candidate', routeOrder: 7, keyRole: 'branch', lat: 33.2456, lng: 126.4115, address: 'Saekdal-dong, Seogwipo-si', note: 'Plan A 经过，Plan B 可跳过。', approximate: true },
+    { id: 'nonjitmul', name: 'Nonjitmul / 猊来海岸', koreanName: '논짓물', category: 'hike', status: 'fixed', routeOrder: 8, keyRole: 'waypoint', lat: 33.234, lng: 126.377, address: 'Yerae-dong, Seogwipo-si', note: 'Route 8 后半段海岸节点。', approximate: true },
+    { id: 'daepyeong', name: '大坪港', koreanName: '대평포구', category: 'hike', status: 'fixed', routeOrder: 9, keyRole: 'finish', lat: 33.2371, lng: 126.3638, address: 'Gamsan-ri, Andeok-myeon, Seogwipo-si', note: 'Route 8 终点。', approximate: true },
+    { id: 'bomal', name: '중문수두리보말칼국수', koreanName: '중문수두리보말칼국수', category: 'restaurant', status: 'candidate', keyRole: 'lunch', address: 'Jungmun area, Seogwipo-si', note: '徒步午饭优先候选：bomal 刀切面；精确点位待核验。' },
+    { id: 'gozip', name: 'Gozip Dol Wooluck Jungmun', category: 'restaurant', status: 'candidate', keyRole: 'lunch', address: 'Jungmun area, Seogwipo-si', note: '更正式的石斑鱼/鱼料理候选，若不想吃太重可跳过。' },
+    { id: 'ppolsal', name: '뽈살집 本店', koreanName: '뽈살집 본점', category: 'restaurant', status: 'candidate', address: 'Seogwipo-si', note: '两晚共用晚饭池。' },
+    { id: 'negeori', name: 'Negeori Restaurant', koreanName: '네거리식당', category: 'restaurant', status: 'candidate', address: '20 Seomun-ro 29beon-gil, Seogwipo-si', note: '带鱼料理候选。' },
+    { id: 'meokgojeong', name: '먹고정', koreanName: '먹고정', category: 'restaurant', status: 'candidate', address: 'Seogwipo-si', note: '9/29 略优先的黑猪烧烤候选。' },
+    { id: 'yongi', name: 'Yong’s Restaurant', koreanName: '용이식당', category: 'restaurant', status: 'candidate', address: 'Seogwipo-si', note: '快速、当地感强的备选。' },
   ],
 }
