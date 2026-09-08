@@ -11,15 +11,20 @@ function loadChecklistState() {
   }
 }
 
-export default function ChecklistPanel({ day }) {
-  const [mode, setMode] = useState('daily')
+export default function ChecklistPanel({ day, mode = 'daily', compact = false }) {
   const [state, setState] = useState(() => loadChecklistState())
+  const [manuallyExpanded, setManuallyExpanded] = useState(false)
 
-  const dailyItems = dailyDepartureChecklists[day.date] || []
+  const dailyItems = mode === 'daily' && day ? (dailyDepartureChecklists[day.date] || []) : []
   const groups = useMemo(() => {
     if (mode === 'packing') return tripPackingChecklist
-    return [{ id: `daily-${day.date}`, title: `${day.date.slice(5).replace('-', '/')} · 出发前 Checklist`, items: dailyItems.map((label, index) => ({ id: `daily-${index}`, label })) }]
-  }, [mode, day.date, dailyItems])
+    if (!day) return []
+    return [{
+      id: `daily-${day.date}`,
+      title: '出发前 Checklist',
+      items: dailyItems.map((label, index) => ({ id: `daily-${index}`, label })),
+    }]
+  }, [mode, day, dailyItems])
 
   function itemKey(groupId, itemId) {
     return mode === 'packing' ? `packing:${groupId}:${itemId}` : `${day.date}:${itemId}`
@@ -37,6 +42,8 @@ export default function ChecklistPanel({ day }) {
   const flatItems = groups.flatMap((group) => group.items.map((item) => ({ groupId: group.id, item })))
   const doneCount = flatItems.filter(({ groupId, item }) => state[itemKey(groupId, item.id)]).length
   const percent = flatItems.length ? Math.round(doneCount / flatItems.length * 100) : 0
+  const allDone = flatItems.length > 0 && doneCount === flatItems.length
+  const collapsed = mode === 'daily' && compact && allDone && !manuallyExpanded
 
   function resetCurrent() {
     const prefixes = mode === 'packing' ? ['packing:'] : [`${day.date}:`]
@@ -48,37 +55,42 @@ export default function ChecklistPanel({ day }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
       return next
     })
+    setManuallyExpanded(true)
+  }
+
+  if (collapsed) {
+    return (
+      <section className="panel checklist-collapsed-card">
+        <div>
+          <p className="eyebrow">出发前准备</p>
+          <h2>✅ 今日 Checklist 已完成</h2>
+          <p>{doneCount}/{flatItems.length} · 可以出发了</p>
+        </div>
+        <button className="secondary-button" onClick={() => setManuallyExpanded(true)}>展开</button>
+      </section>
+    )
   }
 
   return (
     <>
-      <section className="panel checklist-hero">
+      <section className={`panel checklist-hero ${compact ? 'checklist-compact' : ''}`}>
         <div className="section-heading">
           <div>
-            <p className="eyebrow">TRIP CHECKLIST</p>
-            <h2>✅ 出行清单</h2>
+            <p className="eyebrow">{mode === 'packing' ? 'BEFORE THE TRIP' : 'BEFORE LEAVING'}</p>
+            <h2>{mode === 'packing' ? '🧳 总行李清单' : '🎒 今日出发前'}</h2>
           </div>
           <span className="check-progress-badge">{doneCount}/{flatItems.length}</span>
         </div>
         <div className="check-progress"><div style={{ width: `${percent}%` }} /></div>
-        <p className="check-progress-text">已完成 {percent}% · 勾选状态保存在当前浏览器</p>
-        <div className="segmented checklist-segmented">
-          <button className={mode === 'daily' ? 'active' : ''} onClick={() => setMode('daily')}>今日出发前</button>
-          <button className={mode === 'packing' ? 'active' : ''} onClick={() => setMode('packing')}>总行李清单</button>
-        </div>
+        <p className="check-progress-text">
+          {allDone ? '全部完成 ✓' : `已完成 ${percent}%`}
+          {mode === 'packing' ? ' · 出发前逐项确认' : ' · 出门前快速过一遍'}
+        </p>
       </section>
-
-      {mode === 'daily' && (
-        <section className="panel reminder-panel checklist-tip">
-          <p className="eyebrow">当天执行</p>
-          <h2>🎒 出门前快速过一遍</h2>
-          <p>当天清单只保留真正会影响当天执行的项目；船班、天气、路线等易变化信息仍以当天实际为准。</p>
-        </section>
-      )}
 
       {groups.map((group) => (
         <section className="panel checklist-group" key={group.id}>
-          <h2>{group.title}</h2>
+          {mode === 'packing' && <h2>{group.title}</h2>}
           {group.note && <p className="section-note">{group.note}</p>}
           <div className="checklist-items">
             {group.items.map((item) => {
@@ -95,9 +107,11 @@ export default function ChecklistPanel({ day }) {
         </section>
       ))}
 
-      <section className="panel checklist-reset-panel">
-        <button className="reset-button checklist-reset" onClick={resetCurrent}>清空当前清单勾选</button>
-      </section>
+      {!compact && (
+        <section className="panel checklist-reset-panel">
+          <button className="reset-button checklist-reset" onClick={resetCurrent}>清空当前清单勾选</button>
+        </section>
+      )}
     </>
   )
 }
