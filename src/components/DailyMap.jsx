@@ -52,19 +52,38 @@ function roleLabel(place) {
 export default function DailyMap({ places, userPosition, onLocate, locating, hikingRoute, planId }) {
   const mappedPlaces = useMemo(() => places.filter(validPlace), [places])
   const pendingCount = places.length - mappedPlaces.length
-  const fixedRoute = useMemo(
+
+  const orderedRoutePlaces = useMemo(
     () => mappedPlaces
       .filter((place) => Number.isFinite(place.routeOrder))
-      .sort((a, b) => a.routeOrder - b.routeOrder)
-      .map((place) => [place.lat, place.lng]),
+      .sort((a, b) => a.routeOrder - b.routeOrder),
     [mappedPlaces],
   )
 
+  const fixedRoute = useMemo(
+    () => orderedRoutePlaces.map((place) => [place.lat, place.lng]),
+    [orderedRoutePlaces],
+  )
+
+  const derivedHikingPath = useMemo(() => {
+    const startIndex = orderedRoutePlaces.findIndex((place) => place.keyRole === 'start')
+    const finishIndex = orderedRoutePlaces.findIndex((place) => place.keyRole === 'finish')
+    if (startIndex < 0 || finishIndex < 0 || finishIndex <= startIndex) return null
+    return orderedRoutePlaces.slice(startIndex, finishIndex + 1).map((place) => [place.lat, place.lng])
+  }, [orderedRoutePlaces])
+
   const hikingPath = useMemo(() => {
-    if (!hikingRoute) return null
-    if (planId && Array.isArray(hikingRoute[planId])) return hikingRoute[planId]
-    return hikingRoute.full || null
-  }, [hikingRoute, planId])
+    if (hikingRoute) {
+      if (planId && Array.isArray(hikingRoute[planId])) return hikingRoute[planId]
+      if (Array.isArray(hikingRoute.full)) return hikingRoute.full
+    }
+    return derivedHikingPath
+  }, [hikingRoute, planId, derivedHikingPath])
+
+  const hasHikingRoute = Array.isArray(hikingPath) && hikingPath.length >= 2
+  const routeName = hikingRoute?.name || (hasHikingRoute ? '今日 Olle 徒步路线' : null)
+  const routeDistance = hikingRoute?.distanceKm
+  const routeNote = hikingRoute?.note || '关键点路线示意：用于理解方向、景点和补给位置，真正导航请打开 Naver。'
 
   const fallbackCenter = mappedPlaces.length
     ? [mappedPlaces[0].lat, mappedPlaces[0].lng]
@@ -83,19 +102,19 @@ export default function DailyMap({ places, userPosition, onLocate, locating, hik
       </div>
 
       <div className="legend">
-        {hikingPath && <span><i className="legend-line hiking-line" />徒步主线</span>}
+        {hasHikingRoute && <span><i className="legend-line hiking-line" />徒步主线</span>}
         <span><i className="legend-dot fixed-dot" />固定地点</span>
         <span><i className="legend-dot candidate-dot" />候选地点</span>
         <span><i className="legend-dot user-dot" />我的位置</span>
       </div>
 
-      {hikingRoute && (
+      {hasHikingRoute && (
         <div className="route-summary">
           <div>
-            <strong>🥾 {hikingRoute.name}</strong>
-            {hikingRoute.distanceKm && <span>约 {hikingRoute.distanceKm} km</span>}
+            <strong>🥾 {routeName}</strong>
+            {routeDistance && <span>约 {routeDistance} km</span>}
           </div>
-          <p>{hikingRoute.note}</p>
+          <p>{routeNote}</p>
         </div>
       )}
 
@@ -106,7 +125,7 @@ export default function DailyMap({ places, userPosition, onLocate, locating, hik
         />
         <FitMap places={mappedPlaces} userPosition={userPosition} hikingPath={hikingPath} />
 
-        {hikingPath?.length >= 2 ? (
+        {hasHikingRoute ? (
           <Polyline positions={hikingPath} pathOptions={{ color: '#2563eb', weight: 6, opacity: 0.82, lineCap: 'round' }} />
         ) : fixedRoute.length >= 2 ? (
           <Polyline positions={fixedRoute} pathOptions={{ color: '#1f7a4f', weight: 4, opacity: 0.72 }} />
@@ -156,7 +175,7 @@ export default function DailyMap({ places, userPosition, onLocate, locating, hik
       </MapContainer>
       <p className="map-note">
         地图用于理解当天空间关系和关键节点；真正的逐步导航继续交给 Naver。
-        {hikingRoute ? ' 徒步线为关键点路线示意，不替代 Jeju Olle 官方最新路径。' : ''}
+        {hasHikingRoute ? ' 徒步线为关键点路线示意，不替代 Jeju Olle 官方最新路径。' : ''}
         {pendingCount > 0 ? ` 另有 ${pendingCount} 个候选点因精确坐标待核验，暂不强行落点。` : ''}
       </p>
     </section>
