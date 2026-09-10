@@ -85,7 +85,9 @@ export const dailyDepartureChecklists = {
   ],
   '2026-09-28': [
     '根据 Plan A/B 决定是否早起看日出',
-    '退房前完成行李配送交接',
+    '确认 Hotel Bridge 可在入住前寄存行李',
+    'Plan A：日出期间大件行李先短存 Playce 前台，早餐后取回',
+    '自己把行李带到 Hotel Bridge，再轻装去 Route 7',
     '水 + 碳水早餐 + 能量零食',
     '防晒霜 / 太阳帽 / 墨镜',
     '雨衣或轻薄外套',
