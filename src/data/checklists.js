@@ -37,6 +37,7 @@ export const tripPackingChecklist = [
       { id: 'cables', label: '数据线（手机及手表）' },
       { id: 'cameras', label: '运动相机 / 拍立得 / 相机' },
       { id: 'sim', label: '流量卡 / 卡针' },
+      { id: 'headlamp', label: '头灯' },
     ],
   },
   {
