@@ -7,6 +7,7 @@ export const day5 = {
   hotel: 'I-Jin Hotel',
   reminder: '今天徒步结束后要回济州市，晚上尽量早点睡，为 10/1 08:25 济州 → 金浦航班留足休息。',
   verificationNotes: [
+    '9/30 行李转运已确认：Hotel Bridge Seogwipo（서귀포시 태평로 436）→ I-Jin Hotel（제주특별자치도 제주시 신대로22길 4）。',
     'Route 10 当前沿用此前讨论的 15.6 km、约 5–6 小时版本；旧资料可能仍显示 17.3 km，出发前按官方最新路线复核。',
     '龙头海岸是否开放受潮汐与天气影响，不列为必去。',
     '151 / 102 巴士实际时刻与候车时间当天看 Naver；等待过久可直接 Taxi。',
@@ -18,7 +19,7 @@ export const day5 = {
     },
     {
       id: 'checkout', time: '07:40', title: 'Hotel Bridge 退房 + 交行李', icon: '🧳',
-      description: '行李配送至 I-Jin Hotel；自己轻装走 Route 10。',
+      description: '行李转运已预约：Hotel Bridge → I-Jin Hotel；前台交接后轻装走 Route 10。',
     },
     {
       id: 'transfer', time: '07:55', title: '前往华顺金砂海滩', icon: '🚌',
