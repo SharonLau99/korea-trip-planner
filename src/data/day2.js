@@ -8,7 +8,7 @@ export const day2 = {
   reminder: '牛岛船班、天气与末班船需要前一晚再次确认；护照、防晒、水和能量补给随身。',
   verificationNotes: [
     '牛岛 2026-09-27 实际船班与末班船：T-1 以官方/码头公告为准。',
-    'I-Jin → Playce Camp 的行李配送是否已预订，当前项目记录仍需最终确认。',
+    '9/27 行李转运已确认：I-Jin Hotel（제주특별자치도 제주시 신대로22길 4）→ Playce Camp Jeju（제주특별자치도 서귀포시 성산읍 동류암로 20）。',
   ],
   planOptions: [
     {
@@ -53,7 +53,7 @@ export const day2 = {
       time: '07:30',
       title: 'I-Jin Hotel 出发',
       icon: '🏨',
-      description: '早餐后离店。若已预约行李配送，在前台交接后轻装出发。',
+      description: '早餐后离店；行李转运已预约，在 I-Jin 前台交接后轻装出发。',
       transportToNext: 'Taxi 前往咸德；公共交通合适也可选。',
     },
     {
@@ -159,8 +159,8 @@ export const day2 = {
     },
     {
       id: 'playce', name: 'Playce Camp Jeju', koreanName: '플레이스캠프 제주', category: 'hotel', status: 'fixed', routeOrder: 5,
-      lat: 33.449, lng: 126.9188, address: 'Dongnyuam-ro, Seongsan-eup, Seogwipo-si',
-      note: '9/27 住宿。', approximate: true,
+      lat: 33.449944, lng: 126.91838, address: '20 Dongnyuam-ro, Seongsan-eup, Seogwipo-si, Jeju-do',
+      note: '9/27 住宿；当日行李转运到达地。',
     },
     {
       id: 'jejuTtukbaegi', name: '济州土锅', koreanName: '제주뚝배기', category: 'restaurant', status: 'candidate',
